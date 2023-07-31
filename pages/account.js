@@ -160,10 +160,10 @@ export default function AccountPage({categ}){
                                         )}
                                         {wishlistLoaded && (
                                             <>
-                                                {wishedProducts.length > 0 && (
+                                                {currentWishListItems.length > 0 && (
                                                     <>
                                                         <div className="grid gap-[40px]" style={{gridTemplateColumns: '1fr 1fr'}}>
-                                                            {wishedProducts.map((wp,index) => (
+                                                            {currentWishListItems.map((wp,index) => (
                                                                 <div key={index} className="border-2 border-[#edeaea] rounded-md">
                                                                     <ProductBox key={wp._id} {...wp} wished={true} onRemoveFromWishlist={productRemovedFromWishlist} categ={categ}></ProductBox>
                                                                 </div>
