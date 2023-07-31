@@ -26,23 +26,23 @@ export default function Footer(){
                     <div className="block">
                         <h2 className="text-[1.3rem] font-[500]">Account</h2>
                         <hr className="my-2" />
-                        <p className="py-1 text-[#515151]"><a href="/account">My Account</a></p>
-                        <p className="py-1 text-[#515151]"><a href="/account">Order History</a></p>
-                        <p className="py-1 text-[#515151]"><a href="/account">Wish List</a></p>
+                        <p className="py-1 text-[#515151]"><Link href="/account">My Account</Link></p>
+                        <p className="py-1 text-[#515151]"><Link href="/account">Order History</Link></p>
+                        <p className="py-1 text-[#515151]"><Link href="/account">Wish List</Link></p>
                     </div>
                     <div>
                         <h2 className="text-[1.3rem] font-[500]">Services</h2>
                         <hr className="my-2" />
-                        <p className="py-1 text-[#515151]"><a>Policy</a></p>
-                        <p className="py-1 text-[#515151]"><a>Customer Service</a></p>
-                        <p className="py-1 text-[#515151]"><a>Term & Conditions</a></p>
+                        <p className="py-1 text-[#515151]"><Link href="#">Policy</Link></p>
+                        <p className="py-1 text-[#515151]"><Link href="#">Customer Service</Link></p>
+                        <p className="py-1 text-[#515151]"><Link href="#">Term & Conditions</Link></p>
                     </div>
                     <div>
                         <h2 className="text-[1.3rem] font-[500]">Info</h2>
                         <hr className="my-2" />
-                        <p className="py-1 text-[#515151]"><a>About Us</a></p>
-                        <p className="py-1 text-[#515151]"><a>FAQ</a></p>
-                        <p className="py-1 text-[#515151]"><a>Contact Us</a></p>
+                        <p className="py-1 text-[#515151]"><Link href="/">About Us</Link></p>
+                        <p className="py-1 text-[#515151]"><Link href="#">FAQ</Link></p>
+                        <p className="py-1 text-[#515151]"><Link href="#">Contact Us</Link></p>
                     </div>
                 </div>
             </Center>
