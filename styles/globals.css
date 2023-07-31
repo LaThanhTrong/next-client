@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+body{
+    padding: 0;
+    margin: 0;
+}
+
+div#__next{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#container{
+    flex-grow: 1;
+}
+
+@keyframes fly{
+    100%{
+        top: 0;
+        left: calc(100% - 130px);
+        opacity: 0;
+        display: none;
+        max-width: 50px;
+        max-height: 50px;
+    }
+}
+
+hr{
+    display: block;
+    border: 0;
+    border-top: 1px solid #ccc;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+}
+  
+.pagination a {
+    @apply text-black rounded-md;
+    float: left;
+    padding: 8px 15px;
+    text-decoration: none;
+    transition: background-color .3s;
+    margin: 0 4px;
+}
+
+.pagination a.active {
+    @apply bg-[#eef2ff] text-[#536ced]
+}
+  
+.pagination a:hover:not(.active) {
+    @apply bg-gray-100 text-[#6b7280]
+}
