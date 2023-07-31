@@ -57,10 +57,6 @@ export default function AccountPage({categ}){
         await signIn('google')
     }
 
-    async function loginFacebook(){
-        await signIn('facebook')
-    }
-
     function saveAddress(){
         const data = {name,email,address,phoneNumber}
         axios.put('/api/address', data).then(res=>{
@@ -230,10 +226,6 @@ export default function AccountPage({categ}){
                                         <button className="w-full text-gray-500 shadow-md flex items-center justify-center gap-4 text-lg py-3 rounded-sm" onClick={loginGoogle}>
                                             <img className="w-10 h-auto" src="/images/template/google.png"></img>
                                             Sign in with Google
-                                        </button><br />
-                                        <button onClick={loginFacebook} className="w-full bg-[#2b77f2] text-white shadow-md flex items-center justify-center gap-4 text-lg py-3 rounded-sm">
-                                            <img className="w-10 h-auto bg-[#2b77f2]" src="/images/template/facebook2.png"></img>
-                                            Sign in with Facebook
                                         </button>
                                     </>
                                 )}
