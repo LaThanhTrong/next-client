@@ -1,4 +1,5 @@
 import Center from "./Center";
+import Link from "next/link";
 
 export default function Footer(){
     return(
@@ -10,10 +11,10 @@ export default function Footer(){
                         <h2 className="font-bold text-[1rem]">Location</h2>
                         <p className="text-[#989898] mb-6">71 Pilgrim Avenue Chevy Chase, MD 20815, USA</p>
                         <div className="flex items-center gap-2">
-                            <a href="https://twitter.com/ElleAlana3" target="_blank"><img className="rounded-sm w-[35px] h-[35px]" src="/images/template/x.png"></img></a>
-                            <a href="https://www.facebook.com/lathanhtrong2002" target="_blank"><img className="rounded-sm bg-white w-[35px] h-[35px]" src="/images/template/facebook.png"></img></a>
-                            <a href="https://discordapp.com/users/577097299709394944" target="_blank"><img className="rounded-sm w-[35px] h-[35px]" src="/images/template/discord.png"></img></a>
-                            <a href="https://github.com/LaThanhTrong" target="_blank"><img className="rounded-sm w-[35px] h-[35px]" src="/images/template/github.png"></img></a>
+                            <Link href="https://twitter.com/ElleAlana3" target="_blank"><img className="rounded-sm w-[35px] h-[35px]" src="/images/template/x.png"></img></Link>
+                            <Link href="https://www.facebook.com/lathanhtrong2002" target="_blank"><img className="rounded-sm bg-white w-[35px] h-[35px]" src="/images/template/facebook.png"></img></Link>
+                            <Link href="https://discordapp.com/users/577097299709394944" target="_blank"><img className="rounded-sm w-[35px] h-[35px]" src="/images/template/discord.png"></img></Link>
+                            <Link href="https://github.com/LaThanhTrong" target="_blank"><img className="rounded-sm w-[35px] h-[35px]" src="/images/template/github.png"></img></Link>
                         </div>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-5">
