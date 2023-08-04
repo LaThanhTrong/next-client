@@ -9,6 +9,7 @@ import { Setting } from "@/models/Setting";
 import Steps from "@/components/Steps";
 import AboutUs from "@/components/AboutUs";
 import { Category } from "@/models/Category";
+import CleverChatBot from "@/components/Chatbot";
 
 export default function Home({featuredProduct, newProducts, wishedNewProducts, categ}){ 
   return (
@@ -17,6 +18,7 @@ export default function Home({featuredProduct, newProducts, wishedNewProducts, c
       <NewProducts products={newProducts} wishedProducts={wishedNewProducts} categ={categ}></NewProducts>
       <Steps></Steps>
       <AboutUs></AboutUs>
+      <CleverChatBot></CleverChatBot>
     </div>
   )
 }
