@@ -5,19 +5,15 @@ import { RevealWrapper } from "next-reveal";
 import ProductBox from "@/components/ProductBox";
 import { debounce } from "lodash";
 import Spinner from "@/components/Spinner";
-import { Product } from "@/models/Product";
-import { WishedProduct } from "@/models/WishedProduct";
 import { mongooseConnect } from "@/lib/mongoose";
 import { Category } from "@/models/Category";
-import { getServerSession } from "next-auth";
-import { authOptions } from "./api/auth/[...nextauth]";
 
-
-export default function SearchPage({wishedProducts=[], categ}){
+export default function SearchPage({categ}){
     const [phrase, setPhrase] = useState('')
     const [products, setProducts] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const debouncedSearch = useCallback(debounce(searchProducts, 500), [])
+    const [wish, setWish] = useState([])
     useEffect(() => {
         if(phrase.length > 0){
             setIsLoading(true)
@@ -26,7 +22,12 @@ export default function SearchPage({wishedProducts=[], categ}){
         else{
             setProducts([])
         }
+        axios.get('/api/wishlist').then(response => {
+            console.log(response.data.map(wp => wp.product._id))
+            setWish(response.data.map(wp => wp.product._id))
+        })
     }, [phrase])
+
     function searchProducts(phrase){
         axios.get('/api/products?phrase='+encodeURIComponent(phrase)).then(response => {
             setProducts(response.data)
@@ -50,7 +51,7 @@ export default function SearchPage({wishedProducts=[], categ}){
                 {!isLoading && products.length > 0 && (
                     <div className="grid grid-cols-4 gap-10 px-4 py-8">{products?.length > 0 && products.map((product,index) => (
                         <RevealWrapper key={product._id} delay={index*50}>
-                            <ProductBox key={product._id} {...product} wished={wishedProducts.includes(product._id)} categ={categ}></ProductBox>
+                            <ProductBox key={product._id} {...product} wished={wish.includes(product._id)} categ={categ}></ProductBox>
                         </RevealWrapper>
                         ))}
                     </div>
@@ -62,16 +63,9 @@ export default function SearchPage({wishedProducts=[], categ}){
 
 export async function getServerSideProps(ctx){
     await mongooseConnect()
-    const products = await Product.find({}, null, {sort: {'_id':-1}});
     const categ = await Category.find().populate('parent')
-    const session = await getServerSession(ctx.req, ctx.res, authOptions)
-    const wishedProducts = session?.user ? await WishedProduct.find({
-      userEmail: session.user.email,
-      product: products.map(p => p._id.toString()),
-    }) : []
     return {
         props:{
-            wishedProducts: wishedProducts.map(i => i.product.toString()),
             categ: JSON.parse(JSON.stringify(categ)),
         }
     }
