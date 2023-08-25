@@ -6,9 +6,12 @@ import ProductBox from "@/components/ProductBox";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Spinner from "@/components/Spinner";
+import { WishedProduct } from "@/models/WishedProduct";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]";
 
-export default function CategoryPage({_id, category, subCategories, products:originalProducts, categories}){
-
+export default function CategoryPage({_id, category, subCategories, products:originalProducts, categories, wishedProducts=[]}){
+    const [wished, setWished] = useState(wishedProducts)
     const propertiesToFill = []
     if(categories.length > 0 && category._id){
         let catInfo = categories.find(({_id}) => _id === category._id);
@@ -26,6 +29,7 @@ export default function CategoryPage({_id, category, subCategories, products:ori
     const [products, setProducts] = useState(originalProducts);
     const [sort, setSort] = useState(defaultSorting)
     const [loadingProducts, setLoadingProducts] = useState(false)
+    const [loadingWishes, setLoadingWishes] = useState(false)
     const [filtersChanged, setFiltersChanged] = useState(false)
 
     function handleFilterChange(filterName, filterValue){
@@ -43,6 +47,12 @@ export default function CategoryPage({_id, category, subCategories, products:ori
             return
         }
         setLoadingProducts(true)
+        setLoadingWishes(true)
+        axios.get('/api/wishlist').then(response => {
+            console.log(response.data.map(wp => wp.product._id))
+            setWished(response.data.map(wp => wp.product._id))
+            setLoadingWishes(false)
+        })
         const catIds = [category._id, ...(subCategories?.map(c => c._id) || [])];
         const params = new URLSearchParams;
         params.set('categories', catIds.join(','));
@@ -88,12 +98,12 @@ export default function CategoryPage({_id, category, subCategories, products:ori
                 {loadingProducts && (
                     <Spinner fullWidth />
                 )}
-                {!loadingProducts && (
+                {!loadingProducts && !loadingWishes && (
                     <div className="mt-3 mb-8">
                         {products.length > 0 && (
                             <div className="grid grid-cols-4 gap-10 pt-[30px]">{products?.length > 0 && products.map(product => (
                                 <div key={product._id} className="border-2 border-[#edeaea] rounded-md">
-                                    <ProductBox key={product._id} {...product} categ={categories}></ProductBox>
+                                    <ProductBox key={product._id} {...product} wished={wished.includes(product._id)} categ={categories}></ProductBox>
                                 </div>
                                 ))}
                             </div>
@@ -116,13 +126,19 @@ export async function getServerSideProps(context){
     const subCategories = await Category.find({parent: category._id})
     const catIds = [category._id, ...subCategories.map(c => c._id)]
     const products = await Product.find({category: catIds})
+    const session = await getServerSession(context.req, context.res, authOptions)
+    const wishedProducts = session?.user ? await WishedProduct.find({
+        userEmail: session.user.email,
+        product: products.map(p => p._id.toString()),
+      }) : []
     return {
         props:{
             _id: JSON.parse(JSON.stringify(id)),
             category: JSON.parse(JSON.stringify(category)),
             subCategories: JSON.parse(JSON.stringify(subCategories)),
             products: JSON.parse(JSON.stringify(products)),
-            categories : JSON.parse(JSON.stringify(categories))
+            categories : JSON.parse(JSON.stringify(categories)),
+            wishedProducts: wishedProducts.map(i => i.product.toString()),
         }
     }
 }
