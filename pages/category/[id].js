@@ -49,7 +49,6 @@ export default function CategoryPage({_id, category, subCategories, products:ori
         setLoadingProducts(true)
         setLoadingWishes(true)
         axios.get('/api/wishlist').then(response => {
-            console.log(response.data.map(wp => wp.product._id))
             setWished(response.data.map(wp => wp.product._id))
             setLoadingWishes(false)
         })
