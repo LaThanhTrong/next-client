@@ -22,14 +22,17 @@ export default async function handler(req, res){
         const productInfo = productsInfos.find(p => p._id.toString() === productId);
         const quantity = productsIds.filter(id => id === productId)?.length || 0;
         if (quantity > 0 && productInfo) {
-        line_items.push({
-            quantity,
-            price_data: {
-            currency: 'VND',
-            product_data: {name:productInfo.title},
-            unit_amount: productInfo.price,
-            },
-        });
+            line_items.push({
+                quantity,
+                price_data: {
+                    currency: 'VND',
+                    product_data: {
+                        name: productInfo.title,
+                        description: productInfo._id,
+                    },
+                    unit_amount: productInfo.price,
+                },
+            });
         }
     }
 

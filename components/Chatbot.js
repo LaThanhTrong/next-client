@@ -14,7 +14,7 @@ const CleverChatBot = () => {
       };
     }, []);
     
-    return <clever-chatbot version="1.0.0" chatbotId="0b4e5cd22a3"></clever-chatbot>;
+    return <clever-chatbot version="1.0.0" chatbotId="0683c6c72d1"></clever-chatbot>;
 }
 
 export default CleverChatBot;

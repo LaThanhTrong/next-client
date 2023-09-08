@@ -5,6 +5,8 @@ import axios from "axios";
 import { RevealWrapper } from "next-reveal";
 import { useSession } from "next-auth/react";
 import { Quicksand } from 'next/font/google'
+import Swal from 'sweetalert2'
+
 const qs = Quicksand({ subsets: ['latin'] })
 
 export default function CartPage(){
@@ -70,22 +72,42 @@ export default function CartPage(){
         if(document.getElementById("name").value === ""){
             document.getElementById("nameError").style.display = "block"
         }
-        if(document.getElementById("email").value === ""){
+        else if(document.getElementById("email").value === ""){
             document.getElementById("emailError").style.display = "block"
         }
-        if(document.getElementById("address").value === ""){
+        else if(document.getElementById("address").value === ""){
             document.getElementById("addressError").style.display = "block"
         }
-        if(document.getElementById("phone").value === ""){
+        else if(document.getElementById("phone").value === ""){
             document.getElementById("phoneError").style.display = "block"
         }
         else{
-            const response = await axios.post('/api/checkout',{
-                name,email,address,phoneNumber,
-                cartProducts,
+            let data = []
+            let flag = false
+            await axios.post('/api/cart', {ids:cartProducts}).then(response => {
+                data = response.data
             })
-            if(response.data.url){
-                window.location = response.data.url
+            data.map(product => {
+                if(product.quantity === 0 || product.quantity < cartProducts.filter(id => id === product._id)?.length){
+                    flag = true
+                }
+            })
+            if(flag){
+                Swal.fire({
+                    title: 'Out of stock',
+                    text: 'Oops, our inventory is not enough product or one of the product in the cart is out of stock. Please remove them and try again!',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+            else{
+                const response = await axios.post('/api/checkout',{
+                    name,email,address,phoneNumber,
+                    cartProducts,
+                })
+                if(response.data.url){
+                    window.location = response.data.url
+                }
             }
         }
     }
