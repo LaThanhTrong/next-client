@@ -1,0 +1,18 @@
+input[type="checkbox"]:checked + label svg {
+    display: block;
+}
+
+#categories {
+    height: 0;
+    visibility: hidden;
+    z-index: 10;
+    overflow-y: auto;
+    background-color: #f3f4f6;
+    padding: 0px 30px;
+    transition: height 0.25s ease-in-out;
+}
+  
+#menu:hover #categories {
+    visibility: visible;
+    height: 250px; /* Change the height when hovered over */
+}

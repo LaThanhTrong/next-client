@@ -122,11 +122,11 @@ const styles = StyleSheet.create({
     },
 })
 
-const PDFFile = ({order}) => {
+const PDFFile = ({order, line_items}) => {
     let sum = 0
-    let n = order.line_items.length
+    let n = line_items.length
     for (let i = 0; i < n; i++) {
-        sum += order.line_items[i].price_data.unit_amount
+        sum += line_items[i].price_data.unit_amount
     }
     
     return (
@@ -141,6 +141,7 @@ const PDFFile = ({order}) => {
                         <Text style={styles.text}><Text style={styles.grey}>Date created: </Text>{(new Date(order.createdAt)).toLocaleString()}</Text>
                         <Text style={styles.text}><Text style={styles.grey}>Order ID: </Text>{order._id}</Text>
                         <Text style={styles.text}><Text style={styles.grey}>Status: </Text>{order.paid === true ? "Paid" : "Failed"}</Text>
+                        {order.paid === false && <Text style={styles.text}><Text style={styles.grey}>Reason: </Text>Payment Canceled</Text>}
                     </View>
                 </View>
 
@@ -181,7 +182,7 @@ const PDFFile = ({order}) => {
                         <Text style={styles.row3}>Price</Text>
                         <Text style={styles.row4}>Total</Text>
                     </View>
-                    {order.line_items.map((row, i) => (
+                    {line_items.map((row, i) => (
                         <View key={i} style={styles.row} wrap={false}>
                             <Text style={styles.row1}>
                                 <Text style={styles.bold}>{row.price_data?.product_data.name}</Text>

@@ -11,10 +11,11 @@ const qs = Quicksand({ subsets: ['latin'] })
 
 export default function CartPage(){
     const {cartProducts, addProduct, removeProduct, clearCart} = useContext(CartContext)
-    const [products, setProducts] = useState([])
+    const [inventory, setInventory] = useState([])
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [address, setAddress] = useState('')
+    const [listAddress, setListAddress] = useState([])
     const [phoneNumber, setPhoneNumber] = useState('')
     const [isSuccess,setIsSuccess] = useState(false)
     const {data:session} = useSession()
@@ -24,10 +25,10 @@ export default function CartPage(){
         if (cartProducts.length > 0) {
             axios.post('/api/cart', {ids:cartProducts})
             .then(response => {
-              setProducts(response.data);
+              setInventory(response.data);
             })
         } else {
-            setProducts([]);
+            setInventory([]);
         }
     }, [cartProducts]);
 
@@ -51,8 +52,11 @@ export default function CartPage(){
         axios.get('/api/address').then(response => {
             setName(response.data?.name)
             setEmail(response.data?.email)
-            setAddress(response.data?.address)
             setPhoneNumber(response.data?.phoneNumber)
+        })
+        axios.get('/api/customeraddress').then(response=>{
+            setListAddress(response.data.map(ad => ad.address))
+            setAddress(response.data[0]?.address)
         })
     }, [session])
 
@@ -69,33 +73,46 @@ export default function CartPage(){
     }
 
     async function goToPayment(){
-        if(document.getElementById("name").value === ""){
+        if(name === ""){
             document.getElementById("nameError").style.display = "block"
         }
-        else if(document.getElementById("email").value === ""){
+        else if(email === ""){
             document.getElementById("emailError").style.display = "block"
         }
-        else if(document.getElementById("address").value === ""){
+        else if(address === ""){
             document.getElementById("addressError").style.display = "block"
         }
-        else if(document.getElementById("phone").value === ""){
+        else if(phoneNumber === ""){
             document.getElementById("phoneError").style.display = "block"
         }
         else{
+            if(session){
+                axios.put('/api/customeraddress', {address}).then(response => {
+                    axios.get('/api/customeraddress').then(response=>{
+                        setListAddress(response.data.map(ad => ad.address))
+                    })
+                })
+            }
             let data = []
+            let string = ""
             let flag = false
             await axios.post('/api/cart', {ids:cartProducts}).then(response => {
                 data = response.data
             })
             data.map(product => {
-                if(product.quantity === 0 || product.quantity < cartProducts.filter(id => id === product._id)?.length){
+                if(product.quantity === 0){
                     flag = true
+                    string += product.title + " is out of stock.\n"
+                }
+                else if(product.quantity < cartProducts.filter(id => id === product._id)?.length){
+                    flag = true
+                    string += product.title + " only has " + product.quantity + " left.\n"
                 }
             })
             if(flag){
                 Swal.fire({
-                    title: 'Out of stock',
-                    text: 'Oops, our inventory is not enough product or one of the product in the cart is out of stock. Please remove them and try again!',
+                    title: 'Oops, Cart error!',
+                    html: `<pre style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; font-size:20px; line-height:130%";>${string} <h2 style="font-weight:bold; font-size:22px;">Please remove them and try again.<h2></pre>`,
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
@@ -113,8 +130,8 @@ export default function CartPage(){
     }
 
     let productsTotal = 0
-    for(const productId of cartProducts){
-        const price = products.find(p => p._id === productId)?.price || 0
+    for(const inventoryId of cartProducts){
+        const price = inventory.find(p => p._id === inventoryId)?.price || 0
         productsTotal += price
     }
 
@@ -145,7 +162,7 @@ export default function CartPage(){
                                 <img className="max-w-full" src="/images/template/empty_cart.png"></img>
                             </div>
                         )}
-                        {products?.length > 0 && (
+                        {inventory?.length > 0 && (
                             <table className="w-full table-fixed">
                                 <thead>
                                     <tr>
@@ -155,24 +172,24 @@ export default function CartPage(){
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {products.map(product => (
-                                        <tr key={product._id}>
+                                    {inventory.map(i => (
+                                        <tr key={i._id}>
                                             <td className="py-[10px] px-0 border-t-[1px] border-gray-300">
                                                 <div className="w-[100px] h-[100px] p-[10px] rounded-sm flex items-center justify-center">
-                                                    <img className="max-w-[80px] max-h-[80px]" src={product.images[0]}></img>
+                                                    <img className="max-w-[80px] max-h-[80px]" src={i.product.images[0]}></img>
                                                 </div>
-                                                <p className="text-sm">{product.title}</p>
+                                                <p className="text-sm">{i.product.title}</p>
                                             </td>
                                             <td className="border-t-[1px] border-gray-300">
                                                 <div className="flex justify-center items-center gap-1">
-                                                    <button onClick={() => lessOfThisProduct(product._id)} className="bg-gray-200 rounded-md py-0 px-[15px] text-[1rem] mr-2">-</button>
-                                                    <div className={qs.className+" font-[600]"}>{cartProducts.filter(id => id === product._id).length}</div>
-                                                    <button onClick={() => moreOfThisProduct(product._id)} className="bg-gray-200 rounded-md py-0 px-[15px] text-[1rem] ml-2">+</button>
+                                                    <button onClick={() => lessOfThisProduct(i._id)} className="bg-gray-200 rounded-md py-0 px-[15px] text-[1rem] mr-2">-</button>
+                                                    <div className={qs.className+" font-[600]"}>{cartProducts.filter(id => id === i._id).length}</div>
+                                                    <button onClick={() => moreOfThisProduct(i._id)} className="bg-gray-200 rounded-md py-0 px-[15px] text-[1rem] ml-2">+</button>
                                                 </div>
                                                 
                                             </td>
                                             <td className={qs.className+" border-t-[1px] border-gray-300 text-right text-base font-[600]"}>
-                                                đ{(cartProducts.filter(id => id === product._id).length * product.price).toLocaleString()}
+                                                đ{(cartProducts.filter(id => id === i._id).length * i.price).toLocaleString()}
                                             </td>
                                         </tr>
                                     ))}
@@ -196,12 +213,19 @@ export default function CartPage(){
                 {!!cartProducts?.length && (
                     <RevealWrapper delay={100}>
                         <div className="bg-[#fff] rounded-sm p-[30px]">
-                            <h2 className="mb-2">Order Information</h2>
+                            <h2 className="font-bold text-[1.5rem] mb-4">Order Information</h2>
                             <input id="name" className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Name" name="name" value={name} onChange={ev => setName(ev.target.value)}></input>
                             <p id="nameError" className="mb-2 text-rose-500 hidden">Name field is required!</p>
                             <input id="email" className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="email" placeholder="Email" name="email" value={email} onChange={ev => setEmail(ev.target.value)}></input>
                             <p id="emailError" className="mb-2 text-rose-500 hidden">Email field is required!</p>
-                            <input id="address" className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Address" name="address" value={address} onChange={ev => setAddress(ev.target.value)}></input>
+                            <div className="flex items-center gap-2">
+                                <input id="address" className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Address" name="address" value={address} onChange={ev => setAddress(ev.target.value)}></input>
+                                <select className="w-[35%] h-11 p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" value={address} onChange={ev => setAddress(ev.target.value)}>
+                                    {listAddress.map((ad,index) => (
+                                        <option key={index} value={ad}>{ad}</option>
+                                    ))}
+                                </select>
+                            </div>
                             <p id="addressError" className="mb-2 text-rose-500 hidden">Address field is required!</p>
                             <input id="phone" className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Phone Number" name="phoneNumber" value={phoneNumber} onChange={ev => setPhoneNumber(ev.target.value)}></input>
                             <p id="phoneError" className="mb-2 text-rose-500 hidden">Phone field is required!</p>

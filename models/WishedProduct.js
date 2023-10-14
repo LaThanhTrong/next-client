@@ -1,9 +1,8 @@
-import { model, models, Schema } from "mongoose"
-import { Product } from "@/models/Product"
+const { Schema, model, models, default: mongoose } = require("mongoose")
 
 const WishedProductSchema = new Schema({
     userEmail: {type: String, required: true},
-    product: {type: Schema.Types.ObjectId, ref: Product},
+    inventory: {type: Schema.Types.ObjectId, ref: 'Inventory'},
 })
 
 export const WishedProduct = models?.WishedProduct || model('WishedProduct', WishedProductSchema)

@@ -7,7 +7,7 @@ import { Roboto } from 'next/font/google';
 
 const rbt = Roboto({ subsets: ['latin'], weight: '400' })
 
-export default function ProductReviews({product}){
+export default function ProductReviews({inventoryId}){
     const [title,setTitle] = useState('');
     const [description,setDescription] = useState('');
     const [stars,setStars] = useState(0);
@@ -27,7 +27,7 @@ export default function ProductReviews({product}){
             setTitleError('block');
         }
         else{
-            const data = {title,description,stars,product:product._id,userEmail:session.user.email,userName:session.user.name};
+            const data = {title,description,stars,inventory:inventoryId,userEmail:session.user.email,userName:session.user.name};
             axios.post('/api/reviews', data).then(res => {
                 setTitle('');
                 setDescription('');
@@ -43,7 +43,7 @@ export default function ProductReviews({product}){
 
     function loadReviews() {
         setReviewsLoading(true);
-        axios.get('/api/reviews?product='+product._id).then(res => {
+        axios.get('/api/reviews?inventory='+inventoryId).then(res => {
           setReviews(res.data);
           setReviewsLoading(false);
         });

@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react"
 export default function Header(){
     const {data:session} = useSession()
     const {cartProducts} = useContext(CartContext)
-
     
     return(
         <header className="bg-[#FFA07A] sticky top-0 z-[1090]">

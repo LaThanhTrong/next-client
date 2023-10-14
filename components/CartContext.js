@@ -21,7 +21,6 @@ export function CartContextProvider({children}){
     }
 
     function removeProduct(productId) {
-        console.log(cartProducts.length)
         setCartProducts(prev => {
             const pos = prev.indexOf(productId)
             if(pos !== -1){

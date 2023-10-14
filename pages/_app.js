@@ -2,6 +2,7 @@ import { CartContextProvider } from '@/components/CartContext'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import '@/styles/globals.css'
+import "@/styles/checkbox.css"
 import { SessionProvider } from "next-auth/react"
 import NextNProgress from 'nextjs-progressbar';
 

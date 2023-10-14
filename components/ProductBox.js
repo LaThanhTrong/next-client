@@ -9,7 +9,7 @@ import { Quicksand } from 'next/font/google'
 const qs = Quicksand({ subsets: ['latin'] })
 import Swal from 'sweetalert2'
 
-export default function ProductBox({_id, title, description, quantity, price, images, category, categ, wished=false, onRemoveFromWishlist=()=>{}}){
+export default function ProductBox({inventoryId, _id, title, description, quantity, price, images, category, categ, wished=false, onRemoveFromWishlist=()=>{}}){
     const [swalProps, setSwalProps] = useState({});
     const categoriesToFill = []
     if(categ){
@@ -25,7 +25,7 @@ export default function ProductBox({_id, title, description, quantity, price, im
     }
 
     const {addProduct} = useContext(CartContext)
-    const url = '/product/'+_id
+    const url = '/product/'+inventoryId
     const imgRef = useRef()
     const activeClass = "text-red-500"
     const inactiveClass = "text-black"
@@ -59,17 +59,17 @@ export default function ProductBox({_id, title, description, quantity, price, im
         ev.stopPropagation()
         const nextValue = !isWished;
         if (nextValue === false && onRemoveFromWishlist) {
-            onRemoveFromWishlist(_id);
+            onRemoveFromWishlist(inventoryId);
           }
         if(session){
             axios.post('/api/wishlist', {
-                product: _id,
+                inventory: inventoryId,
             }).then(() => {})
         }
         setIsWished(nextValue)
     }
 
-    function add(ev, _id){
+    function add(ev, inventoryId){
         if(quantity === 0){
             Swal.fire({
                 title: 'Out of stock',
@@ -80,7 +80,7 @@ export default function ProductBox({_id, title, description, quantity, price, im
         }
         else{
             sendImageToCart(ev)
-            addProduct(_id)
+            addProduct(inventoryId)
         }
     }
 
@@ -106,14 +106,14 @@ export default function ProductBox({_id, title, description, quantity, price, im
                             <span key={index} className="bg-gray-400 mx-[2px] px-2 py-1 text-[12px] text-white rounded-lg">{category}</span>
                         ))}
                 
-                        <h2 className="mt-2"><Link href={'/product/'+_id} className="font-bold text-[1.1rem] m-0">{title}</Link></h2>
+                        <h2 className="mt-2"><Link href={'/product/'+inventoryId} className="font-bold text-[1.1rem] m-0">{title}</Link></h2>
                         <p className="mt-1 text-[#4b5563] text-sm">In Stocks: {quantity}</p>
                         <div className="flex items-center justify-between mt-3 gap-4">
                             <div className={qs.className+" text-[1.1rem] text-emerald-500 font-bold border-2 border-emerald-600 rounded-lg px-2 py-1"}>
                                 đ{price.toLocaleString()}
                             </div>
 
-                            <div className={"flex gap-3"} onClick={ev => add(ev, _id)}>
+                            <div className={"flex gap-3"} onClick={ev => add(ev, inventoryId)}>
                                 <img className="hidden max-w-[100px] max-h-[100px] opacity-100 fixed z-20 rounded-sm" src={images[0]} ref={imgRef} style={{animation: 'fly 1s'}} />
                                 <button className={"bg-transparent border-2 border-[#FFA07A] text-[#FFA07A] rounded-md px-[15px] py-[5px] text-[.9rem] inline-flex items-center font-500 font-['Poppins', sans-serif]"}>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-[20px] mr-1">

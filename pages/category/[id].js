@@ -2,6 +2,7 @@ import Center from "@/components/Center";
 import { mongooseConnect } from "@/lib/mongoose";
 import { Category } from "@/models/Category";
 import { Product } from "@/models/Product";
+import { Inventory } from "@/models/Inventory";
 import ProductBox from "@/components/ProductBox";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -10,7 +11,7 @@ import { WishedProduct } from "@/models/WishedProduct";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
 
-export default function CategoryPage({_id, category, subCategories, products:originalProducts, categories, wishedProducts=[]}){
+export default function CategoryPage({_id, category, subCategories, inventory:originalInventory, categories, wishedProducts=[]}){
     const [wished, setWished] = useState(wishedProducts)
     const propertiesToFill = []
     if(categories.length > 0 && category._id){
@@ -26,9 +27,9 @@ export default function CategoryPage({_id, category, subCategories, products:ori
     const defaultFilterValues = propertiesToFill.map(p => ({name: p.name, value: 'all'}))
     const defaultSorting = '_id-desc'
     const [filtersValues, setFiltersValues] = useState(defaultFilterValues);
-    const [products, setProducts] = useState(originalProducts);
+    const [inventory, setInventory] = useState(originalInventory);
     const [sort, setSort] = useState(defaultSorting)
-    const [loadingProducts, setLoadingProducts] = useState(false)
+    const [loadingInventory, setLoadingInventory] = useState(false)
     const [loadingWishes, setLoadingWishes] = useState(false)
     const [filtersChanged, setFiltersChanged] = useState(false)
 
@@ -46,10 +47,10 @@ export default function CategoryPage({_id, category, subCategories, products:ori
         if(!filtersChanged){
             return
         }
-        setLoadingProducts(true)
+        setLoadingInventory(true)
         setLoadingWishes(true)
         axios.get('/api/wishlist').then(response => {
-            setWished(response.data.map(wp => wp.product._id))
+            setWished(response.data.map(wp => wp.inventory._id))
             setLoadingWishes(false)
         })
         const catIds = [category._id, ...(subCategories?.map(c => c._id) || [])];
@@ -61,10 +62,10 @@ export default function CategoryPage({_id, category, subCategories, products:ori
               params.set(f.name, f.value);
             }
         })
-        const url = `/api/products?` + params.toString();
+        const url = `/api/inventory?` + params.toString();
         axios.get(url).then(res => {
-            setProducts(res.data)
-            setLoadingProducts(false)
+            setInventory(res.data)
+            setLoadingInventory(false)
         })
     },[filtersValues, sort, filtersChanged])
 
@@ -94,20 +95,20 @@ export default function CategoryPage({_id, category, subCategories, products:ori
                         </select>
                     </div>
                 </div>
-                {loadingProducts && (
+                {loadingInventory && (
                     <Spinner fullWidth />
                 )}
-                {!loadingProducts && !loadingWishes && (
+                {!loadingInventory && !loadingWishes && (
                     <div className="mt-3 mb-8">
-                        {products.length > 0 && (
-                            <div className="grid grid-cols-4 gap-10 pt-[30px]">{products?.length > 0 && products.map(product => (
-                                <div key={product._id} className="border-2 border-[#edeaea] rounded-md">
-                                    <ProductBox key={product._id} {...product} wished={wished.includes(product._id)} categ={categories}></ProductBox>
+                        {inventory.length > 0 && (
+                            <div className="grid grid-cols-4 gap-10 pt-[30px]">{inventory?.length > 0 && inventory.map(i => (
+                                <div key={i._id} className="border-2 border-[#edeaea] rounded-md">
+                                    <ProductBox key={i.product._id} {...i.product} inventoryId={i._id} quantity={i.quantity} price={i.price} wished={wished.includes(i._id)} categ={categories}></ProductBox>
                                 </div>
                                 ))}
                             </div>
                         )}
-                        {products.length === 0 && (
+                        {inventory.length === 0 && (
                             <div>Sorry, no products found</div>
                         )}
                     </div>
@@ -125,19 +126,21 @@ export async function getServerSideProps(context){
     const subCategories = await Category.find({parent: category._id})
     const catIds = [category._id, ...subCategories.map(c => c._id)]
     const products = await Product.find({category: catIds})
+    const productIds = products.map(product => product._id);
+    const inventory = await Inventory.find({ product: { $in: productIds } }).populate('product')
     const session = await getServerSession(context.req, context.res, authOptions)
     const wishedProducts = session?.user ? await WishedProduct.find({
         userEmail: session.user.email,
-        product: products.map(p => p._id.toString()),
+        inventory: inventory.map(i => i._id.toString()),
       }) : []
     return {
         props:{
             _id: JSON.parse(JSON.stringify(id)),
             category: JSON.parse(JSON.stringify(category)),
             subCategories: JSON.parse(JSON.stringify(subCategories)),
-            products: JSON.parse(JSON.stringify(products)),
+            inventory: JSON.parse(JSON.stringify(inventory)),
             categories : JSON.parse(JSON.stringify(categories)),
-            wishedProducts: wishedProducts.map(i => i.product.toString()),
+            wishedProducts: wishedProducts.map(i => i.inventory.toString()),
         }
     }
 }

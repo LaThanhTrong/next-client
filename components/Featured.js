@@ -5,7 +5,7 @@ import { CartContext } from "./CartContext";
 import { RevealWrapper } from "next-reveal";
 import Swal from 'sweetalert2'
 
-export default function Featured({product}){
+export default function Featured({inventory, product}){
     const {addProduct} = useContext(CartContext)
     const imgRef = useRef()
     function sendImageToCart(ev){
@@ -32,7 +32,7 @@ export default function Featured({product}){
     },[])
 
     function addFeaturedToCart(ev){
-        if(product.quantity === 0){
+        if(inventory.quantity === 0){
             Swal.fire({
                 title: 'Out of stock',
                 text: 'This product is out of stock',
@@ -42,8 +42,7 @@ export default function Featured({product}){
         }
         else{
             sendImageToCart(ev)
-            addProduct(product)
-
+            addProduct(inventory._id)
         }
     }
 
@@ -58,7 +57,7 @@ export default function Featured({product}){
                                 <h2 className="font-bold text-[2rem]">Order Your Best Food At Any Time</h2>
                                 <p className="text-gray-600 text-[1rem]">Hey, Our delicious foods are waiting for you. We are always near to you with fresh and highest quality item of foods</p>
                                 <div className="flex gap-3 mt-7">
-                                    <Link href={`/product/${product._id}`} className="bg-transparent border-2 border-black rounded-md py-[5px] px-[15px] text-[1.2rem] inline-flex">Read more</Link>
+                                    <Link href={`/product/${inventory._id}`} className="bg-transparent border-2 border-black rounded-md py-[5px] px-[15px] text-[1.2rem] inline-flex">Read more</Link>
                                     <img className="hidden max-w-[100px] max-h-[100px] opacity-100 fixed z-[5] rounded-sm" src={product.images[0]} ref={imgRef} style={{animation: 'fly 1s'}} />
                                     <button onClick={ev => addFeaturedToCart(ev)} className="bg-[#FFA07A] border-2 border-[#FFA07A] text-white rounded-md py-[5px] px-[15px] text-[1.2rem] inline-flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-[20px] mr-1">

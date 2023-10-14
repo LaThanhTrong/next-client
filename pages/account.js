@@ -12,19 +12,24 @@ import { Category } from "@/models/Category";
 import ReactPaginate from "react-paginate";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import PDFFile from "@/components/Invoices";
+import Swal from 'sweetalert2';
+import { Fragment } from "react";
 
 export default function AccountPage({categ}){
     const {data:session} = useSession()
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [address, setAddress] = useState('')
+    const [listAddress, setListAddress] = useState([])
     const [phoneNumber, setPhoneNumber] = useState('')
     const [addressLoaded,setAddressLoaded] = useState(true);
+    const [customerAddressLoaded,setCustomerAddressLoaded] = useState(true);
     const [wishlistLoaded,setWishlistLoaded] = useState(true);
     const [orderLoaded,setOrderLoaded] = useState(true);
     const [wishedProducts, setWishedProducts] = useState([])
     const [activeTab, setActiveTab] = useState('Orders');
     const [orders, setOrders] = useState([]);
+    const [orderDetail, setOrderDetail] = useState([]);
     const itemsPerPageOrder = 5
     const itemsPerPageWishList = 4
 
@@ -58,30 +63,82 @@ export default function AccountPage({categ}){
     }
 
     function saveAddress(){
-        const data = {name,email,address,phoneNumber}
-        axios.put('/api/address', data).then(res=>{
-            alert('Account updated successfully!')
-        })
+        document.getElementById("nameError").style.display = "none"
+        document.getElementById("emailError").style.display = "none"
+        document.getElementById("addressError").style.display = "none"
+        document.getElementById("phoneError").style.display = "none"
+        if(name === ""){
+            document.getElementById("nameError").style.display = "block"
+        }
+        else if(email === ""){
+            document.getElementById("emailError").style.display = "block"
+        }
+        else if(address === ""){
+            document.getElementById("addressError").style.display = "block"
+        }
+        else if(phoneNumber === ""){
+            document.getElementById("phoneError").style.display = "block"
+        }
+        else{
+            const data = {name,email,phoneNumber}
+            axios.put('/api/address', data).then(response => {
+                return axios.put('/api/customeraddress', {address})
+            }).then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Account Information has been saved',
+                    confirmButtonText: 'OK'
+                });
+                axios.get('/api/customeraddress').then(response=>{
+                    setListAddress(response.data.map(ad => ad.address))
+                    setAddress(response.data[0]?.address)
+                })
+            }).catch((error) => {  
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Something went wrong!',
+                    confirmButtonText: 'OK'
+                });
+            })
+        }
     }
     useEffect(()=>{
         if(!session){
             return
         }
         setAddressLoaded(false);
+        setCustomerAddressLoaded(false);
+        setOrderLoaded(false);
         setWishlistLoaded(false);
         axios.get('/api/address').then(response=>{
             setName(response.data?.name)
             setEmail(response.data?.email)
-            setAddress(response.data?.address)
             setPhoneNumber(response.data?.phoneNumber)
             setAddressLoaded(true);
         })
+        axios.get('/api/customeraddress').then(response=>{
+            setListAddress(response.data.map(ad => ad.address))
+            setAddress(response.data[0]?.address)
+            setCustomerAddressLoaded(true);
+        })
         axios.get('/api/wishlist').then(response => {
-            setWishedProducts(response.data.map(wp => wp.product))
+            setWishedProducts(response.data.map(wp => wp.inventory))
             setWishlistLoaded(true);
         })
-        axios.get('/api/orders').then(response => {
-            setOrders(response.data.sort((a,b) => a.createdAt > b.createdAt ? -1 : 1))
+        axios.get('/api/orders', {
+            params: {
+                paid: true
+            }
+        }).then(response => {
+            setOrders(response.data.filter(order => order.paid === true).sort((a,b) => a.createdAt > b.createdAt ? -1 : 1))
+            const orderIds = response.data.map(order => order._id)
+            if(orderIds.length > 0){
+                axios.get('/api/orderdetails?orderIds='+orderIds).then(response => {
+                    setOrderDetail(response.data)
+                })
+            }
             setOrderLoaded(true)
         })
     },[session])
@@ -100,7 +157,77 @@ export default function AccountPage({categ}){
           return [...products.filter(p => p._id.toString() !== idToRemove)];
         });
     }
+    
+    async function getUpdate(address, newAddress){
+        const checkResponse = await axios.get('/api/customeraddress', {params: {newAddress}})
+        if(checkResponse.data){
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: `Address "${newAddress}" already exists!`,
+                confirmButtonText: 'OK'
+            });
+            return
+        }
 
+        const response = await axios.put('/api/customeraddress', {
+            address: address,
+            newAddress: newAddress,
+        });
+        if(response.data){
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Address has been updated',
+                confirmButtonText: 'OK',
+            });
+            const addressesResponse = await axios.get('/api/customeraddress');
+            setListAddress(addressesResponse.data.map((ad) => ad.address));
+            setAddress(addressesResponse.data[0]?.address);
+        }
+        else{
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Something went wrong!',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+    function getRemove(addressToDelete){
+        Swal.fire({
+            title: 'Delete Address',
+            text: `Are you sure you want to delete address "${addressToDelete}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No'
+        }).then(async (result) => {
+            if(result.isConfirmed){
+                const response = await axios.delete('/api/customeraddress?addressToDelete='+addressToDelete);
+                if(response.data){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Address has been removed',
+                        confirmButtonText: 'OK',
+                    });
+                    const addressesResponse = await axios.get('/api/customeraddress');
+                    setListAddress(addressesResponse.data.map((ad) => ad.address));
+                    setAddress(addressesResponse.data[0]?.address);
+                }
+                else{
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Something went wrong!',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        })
+    }
+    
     return(
         <>
             <Center>
@@ -108,7 +235,7 @@ export default function AccountPage({categ}){
                     <div>
                         <RevealWrapper delay={0}>
                             <div className="bg-[#fff] rounded-sm p-[30px]">
-                                <Tabs tabs={['Orders','WishList']} active={activeTab} onChange={setActiveTab}></Tabs>
+                                <Tabs tabs={['Orders','WishList','Addresses']} active={activeTab} onChange={setActiveTab}></Tabs>
                                 {activeTab === 'Orders' && (
                                     <>
                                         {!orderLoaded && (
@@ -119,12 +246,13 @@ export default function AccountPage({categ}){
                                                 {currentOrderItems.length === 0 && (
                                                     <img className="mx-auto" src="/images/template/empty_order.png"></img>
                                                 )}
-                                                {currentOrderItems.length > 0 && (
+                                                {currentOrderItems.length > 0 && orderDetail.length > 0 && (
                                                     <>
                                                         {currentOrderItems.map((o,i) => (
                                                             <div key={i} className="flex items-center justify-between border-b-[1px] border-b-[#dadee2]">
-                                                                <SingleOrder {...o}></SingleOrder>
-                                                                <PDFDownloadLink document={<PDFFile order={o} />} fileName="invoice">
+                                                                
+                                                                <SingleOrder {...o} line_items={orderDetail.filter(od => od.order === o._id)[0].line_items}></SingleOrder>
+                                                                <PDFDownloadLink document={<PDFFile order={o} line_items={orderDetail.filter(od => od.order === o._id)[0].line_items} />} fileName="invoice">
                                                                     {({loading}) => (loading ? <Spinner fullWidth={true}></Spinner> : <button className="border-2 border-[#dadee2] text-[#786d7b] flex items-center gap-2 px-3 py-2 rounded-md"><img className="w-6 h-6" src="/images/template/pdf.png"></img>Download</button> )}
                                                                 </PDFDownloadLink>
                                                             </div>
@@ -156,12 +284,12 @@ export default function AccountPage({categ}){
                                         )}
                                         {wishlistLoaded && (
                                             <>
-                                                {currentWishListItems.length > 0 && (
+                                                {currentWishListItems .length > 0 && (
                                                     <>
                                                         <div className="grid gap-[40px]" style={{gridTemplateColumns: '1fr 1fr'}}>
                                                             {currentWishListItems.map((wp,index) => (
                                                                 <div key={index} className="border-2 border-[#edeaea] rounded-md">
-                                                                    <ProductBox key={wp._id} {...wp} wished={true} onRemoveFromWishlist={productRemovedFromWishlist} categ={categ}></ProductBox>
+                                                                    <ProductBox key={wp.product._id} {...wp.product} inventoryId={wp._id} quantity={wp.quantity} price={wp.price} wished={true} onRemoveFromWishlist={productRemovedFromWishlist} categ={categ}></ProductBox>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -189,6 +317,42 @@ export default function AccountPage({categ}){
                                         )}
                                     </>
                                 )}
+                                {activeTab === 'Addresses' && (
+                                    <>
+                                        {!customerAddressLoaded && (
+                                            <Spinner fullWidth={true}></Spinner>
+                                        )}
+                                        {customerAddressLoaded && (
+                                            <>
+                                                <table className="table-auto border-collapse w-full">
+                                                    <tbody className="">
+                                                        {listAddress.map((ad,index) => {
+                                                            let inputValue = ad;
+                                                            return (
+                                                                <Fragment key={index}>
+                                                                    <tr>
+                                                                        <td className="pt-2 text-[#505562]">Address {index+1}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td className="py-2 whitespace-nowrap w-[90%]">
+                                                                            <input className="w-full p-3 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Address" defaultValue={ad} onChange={(e) => (inputValue = e.target.value)}></input>
+                                                                        </td>
+                                                                        <td className="pl-4 py-2 whitespace-nowrap">
+                                                                            <button className="bg-emerald-400 py-3 px-4 rounded-md text-white" onClick={() => getUpdate(ad, inputValue)}>Update</button>
+                                                                        </td>
+                                                                        <td className="pl-4 py-2 whitespace-nowrap">
+                                                                            <button className="bg-rose-500 py-3 px-4 rounded-md text-white" onClick={() => getRemove(ad)}>Remove</button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </Fragment>
+                                                            )
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </>  
+                                        )}
+                                    </>
+                                )}
                             </div>
                         </RevealWrapper>
                     </div>
@@ -203,12 +367,25 @@ export default function AccountPage({categ}){
                                     <>
                                         <h3 className="text-[#505562]">Full name</h3>
                                         <input className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Name" name="name" value={name} onChange={ev => setName(ev.target.value)}></input>
+                                        <p id="nameError" className="mb-2 text-rose-500 hidden">Name field is required!</p>
                                         <h3 className="text-[#505562]">Email</h3>
                                         <input className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="email" placeholder="Email" name="email" value={email} onChange={ev => setEmail(ev.target.value)}></input>
-                                        <h3 className="text-[#505562]">Address</h3>
-                                        <input className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Address" name="address" value={address} onChange={ev => setAddress(ev.target.value)}></input>
+                                        <p id="emailError" className="mb-2 text-rose-500 hidden">Email field is required!</p>
+                                        <div>
+                                            <h3 className="text-[#505562]">Address</h3>
+                                            <div className="flex items-center gap-2">
+                                                <input className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Address" name="address" value={address} onChange={ev => setAddress(ev.target.value)}></input>
+                                                <select className="w-[35%] h-11 p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" value={address} onChange={ev => setAddress(ev.target.value)}>
+                                                    {listAddress.map((ad,index) => (
+                                                        <option key={index} value={ad}>{ad}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <p id="addressError" className="mb-2 text-rose-500 hidden">Address field is required!</p>
+                                        </div>
                                         <h3 className="text-[#505562]">Phone number</h3>
                                         <input className="w-full p-2 mb-2 border-2 border-gray-400 rounded-sm box-border" type="text" placeholder="Phone Number" name="phoneNumber" value={phoneNumber} onChange={ev => setPhoneNumber(ev.target.value)}></input>
+                                        <p id="phoneError" className="mb-2 text-rose-500 hidden">Phone field is required!</p>
                                         <button onClick={saveAddress} className="bg-[#FFA07A] border-2 border-[#FFA07A] text-white rounded-md py-[5px] px-[15px] text-[1rem] inline-flex items-center w-full justify-center mb-4 mt-2">Save</button>
                                         <hr />
                                     </>

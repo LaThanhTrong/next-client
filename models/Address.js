@@ -1,10 +1,9 @@
-import mongoose, { model, models, Schema } from "mongoose";
+const { Schema, model, models, default: mongoose } = require("mongoose")
 
 const AddressSchema = new Schema({
     userEmail: {type:String, unique:true, required:true},
     name: String,
     email: String,
-    address: String,
     phoneNumber: String,
 })
 

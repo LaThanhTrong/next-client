@@ -1,9 +1,11 @@
 import { mongooseConnect } from "@/lib/mongoose"
 import { Order } from "@/models/Order"
 import { Product } from "@/models/Product";
+import { Inventory } from "@/models/Inventory";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth/[...nextauth]";
 import { Setting } from "@/models/Setting";
+import { OrderDetail } from "@/models/OrderDetail";
 const stripe = require('stripe')(process.env.STRIPE_SK);
 
 export default async function handler(req, res){
@@ -13,21 +15,21 @@ export default async function handler(req, res){
     }
     await mongooseConnect()
     const {name, email, address, phoneNumber, cartProducts} = req.body
-    const productsIds = cartProducts
-    const uniqueIds = [...new Set(productsIds)]
-    const productsInfos = await Product.find({_id:uniqueIds})
+    const inventoryIds = cartProducts
+    const uniqueIds = [...new Set(inventoryIds)]
+    const productsInfos = await Inventory.find({_id:uniqueIds}).populate('product')
 
     let line_items = [];
-    for (const productId of uniqueIds) {
-        const productInfo = productsInfos.find(p => p._id.toString() === productId);
-        const quantity = productsIds.filter(id => id === productId)?.length || 0;
+    for (const inventoryId of uniqueIds) {
+        const productInfo = productsInfos.find(p => p._id.toString() === inventoryId);
+        const quantity = inventoryIds.filter(id => id === inventoryId)?.length || 0;
         if (quantity > 0 && productInfo) {
             line_items.push({
                 quantity,
                 price_data: {
                     currency: 'VND',
                     product_data: {
-                        name: productInfo.title,
+                        name: productInfo.product.title,
                         description: productInfo._id,
                     },
                     unit_amount: productInfo.price,
@@ -42,7 +44,12 @@ export default async function handler(req, res){
     const shippingFeeCents = parseInt(shippingFeeSetting.value || '0')
 
     const orderDoc = await Order.create({
-        line_items,name,email, address, phoneNumber, paid:false, userEmail: session?.user?.email, shippingFee: shippingFeeCents, discount_amount: 0,
+        name,email, address, phoneNumber, paid:false, userEmail: session?.user?.email, shippingFee: shippingFeeCents, discount_amount: 0,
+    })
+
+    const orderDetailDoc = await OrderDetail.create({
+        order: orderDoc._id,
+        line_items,
     })
 
     const stripeSession = await stripe.checkout.sessions.create({
