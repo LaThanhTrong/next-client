@@ -8,8 +8,8 @@ import { WishedProduct } from "@/models/WishedProduct";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]";
 import { useState, useEffect } from "react";
-import Carousel from "react-multi-carousel";
 import { Product } from "@/models/Product";
+import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 
 export default function CategoriesPage({ mainCategories, categoriesProducts, wishedProducts = [], categ }) {
@@ -177,7 +177,8 @@ async function findAllChildCategoryIds(categoryId) {
 
 export async function getServerSideProps(ctx) {
     await mongooseConnect()
-    const mainCategories = await Category.find().populate('parent')
+    const mainCategories = await Category.find()
+    const categ = await Category.find().populate('parent')
     const categoriesProducts = {}
     const allFetchedProductsId = [];
     for (const mainCat of mainCategories) {
@@ -200,7 +201,37 @@ export async function getServerSideProps(ctx) {
             mainCategories: JSON.parse(JSON.stringify(mainCategories)),
             categoriesProducts: JSON.parse(JSON.stringify(categoriesProducts)),
             wishedProducts: wishedProducts.map(i => i.inventory.toString()),
-            categ: JSON.parse(JSON.stringify(mainCategories)),
+            categ: JSON.parse(JSON.stringify(categ)),
         }
     }
 }
+
+// export async function getServerSideProps(ctx) {
+//     await mongooseConnect()
+//     const mainCategories = await Category.find().populate('parent')
+//     const categoriesProducts = {}
+//     const allFetchedProductsId = [];
+//     for (const mainCat of mainCategories) {
+//         const mainCatId = mainCat._id.toString()
+//         const childCatIds = await findAllChildCategoryIds(mainCat._id);
+//         const categoriesIds = [mainCatId, ...childCatIds]
+//         const products = await Product.find({ category: categoriesIds }, null, { sort: { '_id': -1 } })
+//         const productIds = products.map(product => product._id);
+//         const inventory = await Inventory.find({ product: { $in: productIds } }).populate('product')
+//         allFetchedProductsId.push(...inventory.map(i => i._id.toString()))
+//         categoriesProducts[mainCat._id] = inventory
+//     }
+//     const session = await getServerSession(ctx.req, ctx.res, authOptions)
+//     const wishedProducts = session?.user ? await WishedProduct.find({
+//         userEmail: session.user.email,
+//         inventory: allFetchedProductsId,
+//     }) : []
+//     return {
+//         props: {
+//             mainCategories: JSON.parse(JSON.stringify(mainCategories)),
+//             categoriesProducts: JSON.parse(JSON.stringify(categoriesProducts)),
+//             wishedProducts: wishedProducts.map(i => i.inventory.toString()),
+//             categ: JSON.parse(JSON.stringify(mainCategories)),
+//         }
+//     }
+// }
