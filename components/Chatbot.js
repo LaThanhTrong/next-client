@@ -8,13 +8,13 @@ const CleverChatBot = () => {
         script.async = true;
         document.body.appendChild(script);
 
-    // Cleanup when the component unmounts
-    return () => {
-        document.body.removeChild(script);
-      };
+        // Cleanup when the component unmounts
+        return () => {
+            document.body.removeChild(script);
+        };
     }, []);
-    
-    return <clever-chatbot version="1.0.0" chatbotId="0683c6c72d1"></clever-chatbot>;
+
+    return <clever-chatbot version="1.0.0" chatbotId="197eaacdc4a"></clever-chatbot>;
 }
 
 export default CleverChatBot;
