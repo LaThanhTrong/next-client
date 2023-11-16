@@ -177,9 +177,7 @@ async function findAllChildCategoryIds(categoryId) {
 
 export async function getServerSideProps(ctx) {
     await mongooseConnect()
-    const categories = await Category.find()
-    const categ = await Category.find().populate('parent')
-    const mainCategories = categories
+    const mainCategories = await Category.find().populate('parent')
     const categoriesProducts = {}
     const allFetchedProductsId = [];
     for (const mainCat of mainCategories) {
@@ -202,7 +200,7 @@ export async function getServerSideProps(ctx) {
             mainCategories: JSON.parse(JSON.stringify(mainCategories)),
             categoriesProducts: JSON.parse(JSON.stringify(categoriesProducts)),
             wishedProducts: wishedProducts.map(i => i.inventory.toString()),
-            categ: JSON.parse(JSON.stringify(categ)),
+            categ: JSON.parse(JSON.stringify(mainCategories)),
         }
     }
 }
