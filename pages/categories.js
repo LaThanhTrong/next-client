@@ -96,7 +96,7 @@ export default function CategoriesPage({ mainCategories, categoriesProducts, wis
                                     onChange={ev => handleChange(ev)}
                                 />
                                 <label className="flex items-center" htmlFor={`check-${id}`}>
-                                    <span className="w-5 h-5 inline-block mr-2 rounded border border-gray-400 flex items-center justify-center">
+                                    <span className="w-5 h-5 mr-2 rounded border border-gray-400 flex items-center justify-center">
                                         <svg className="hidden w-3 h-3 text-blue-500 pointer-events-none" viewBox="0 0 173.867 173.867">
                                             <path d="M57.253,166.012L0,108.758l34.142-34.142l23.111,23.111l86.582-86.581l34.142,34.141L57.253,166.012z" />
                                         </svg>
