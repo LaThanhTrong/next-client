@@ -14,19 +14,19 @@ import { authOptions } from "./api/auth/[...nextauth]";
 import { Inventory } from "@/models/Inventory";
 
 
-export default function SearchPage({wishedProducts=[], categ}){
+export default function SearchPage({ wishedProducts = [], categ }) {
     const [phrase, setPhrase] = useState('')
     const [inventory, setInventory] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const debouncedSearch = useCallback(debounce(searchProducts, 500), [])
     const [wish, setWish] = useState(wishedProducts)
-    
+
     useEffect(() => {
-        if(phrase.length > 0){
+        if (phrase.length > 0) {
             setIsLoading(true)
             debouncedSearch(phrase)
         }
-        else{
+        else {
             setInventory([])
         }
         axios.get('/api/wishlist').then(response => {
@@ -34,8 +34,8 @@ export default function SearchPage({wishedProducts=[], categ}){
         })
     }, [phrase])
 
-    function searchProducts(phrase){
-        axios.get('/api/inventory?phrase='+encodeURIComponent(phrase)).then(response => {
+    function searchProducts(phrase) {
+        axios.get('/api/inventory?phrase=' + encodeURIComponent(phrase)).then(response => {
             console.log(response.data)
             setInventory(response.data)
             setIsLoading(false)
@@ -56,11 +56,11 @@ export default function SearchPage({wishedProducts=[], categ}){
                     </div>
                 )}
                 {!isLoading && inventory.length > 0 && (
-                    <div className="grid grid-cols-4 gap-10 px-4 py-8">{inventory?.length > 0 && inventory.map((i,index) => (
-                        <RevealWrapper key={i._id} delay={index*50}>
+                    <div className="grid grid-cols-4 gap-10 px-4 py-8">{inventory?.length > 0 && inventory.map((i, index) => (
+                        <RevealWrapper key={i._id} delay={index * 50}>
                             <ProductBox key={i.product._id} {...i.product} inventoryId={i._id} quantity={i.quantity} price={i.price} wished={wishedProducts.includes(i._id)} categ={categ}></ProductBox>
                         </RevealWrapper>
-                        ))}
+                    ))}
                     </div>
                 )}
             </Center>
@@ -68,17 +68,17 @@ export default function SearchPage({wishedProducts=[], categ}){
     )
 }
 
-export async function getServerSideProps(ctx){
+export async function getServerSideProps(ctx) {
     await mongooseConnect()
-    const inventory = await Inventory.find({}, null, {sort: {'_id':-1}}).populate('product');
+    const inventory = await Inventory.find({}, null, { sort: { '_id': -1 } }).populate('product');
     const categ = await Category.find().populate('parent')
     const session = await getServerSession(ctx.req, ctx.res, authOptions)
     const wishedProducts = session?.user ? await WishedProduct.find({
-      userEmail: session.user.email,
-      product: inventory.map(p => p._id.toString()),
+        userEmail: session.user.email,
+        product: inventory.map(p => p._id.toString()),
     }) : []
     return {
-        props:{
+        props: {
             wishedProducts: wishedProducts.map(i => i.inventory.toString()),
             categ: JSON.parse(JSON.stringify(categ)),
         }
